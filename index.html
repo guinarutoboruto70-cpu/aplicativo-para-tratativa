@@ -473,6 +473,7 @@
             height: 100%;
             opacity: 0;
             cursor: pointer;
+            z-index: 10;
         }
 
         /* Whatsapp Send Steps */
@@ -714,7 +715,7 @@
                 <div class="photo-grid" id="grid-fotos-produto-geral">
                     <div class="photo-add-card">
                         <span>+</span>
-                        <input type="file" multiple accept="image/*" onchange="UI.handleMultiPhoto(this, 'produto')">
+                        <input type="file" accept="image/*" capture="environment" onchange="UI.handleMultiPhoto(this, 'produto')">
                     </div>
                 </div>
             </div>
@@ -724,7 +725,7 @@
                 <div class="photo-grid" id="grid-fotos-balanca-geral">
                     <div class="photo-add-card">
                         <span>+</span>
-                        <input type="file" multiple accept="image/*" onchange="UI.handleMultiPhoto(this, 'balanca')">
+                        <input type="file" accept="image/*" capture="environment" onchange="UI.handleMultiPhoto(this, 'balanca')">
                     </div>
                 </div>
             </div>
@@ -734,7 +735,7 @@
                 <div class="photo-grid" id="grid-foto-etiqueta-geral">
                     <div class="photo-add-card">
                         <span>📷</span>
-                        <input type="file" accept="image/*" onchange="UI.handleMultiPhoto(this, 'etiqueta')">
+                        <input type="file" accept="image/*" capture="environment" onchange="UI.handleMultiPhoto(this, 'etiqueta')">
                     </div>
                 </div>
             </div>
@@ -759,9 +760,9 @@
             <img id="preview-img" class="photo-preview">
             <div class="photo-placeholder" id="photo-placeholder">
                 <span style="font-size: 2rem;">📷</span><br>
-                Tirar Foto ou Galeria
+                Tirar Foto (Câmera)
             </div>
-            <input type="file" id="input-foto" class="photo-input" accept="image/*">
+            <input type="file" id="input-foto" class="photo-input" accept="image/*" capture="environment">
         </div>
 
         <div class="input-group">
@@ -1365,25 +1366,34 @@
             const files = Array.from(input.files);
             if (files.length === 0) return;
 
+            this.showToast('Lendo foto...', 'success');
+
             let loadedCount = 0;
             files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    if (type === 'etiqueta') {
-                        this.tratativaPhotos.etiqueta = [e.target.result]; // Single only
-                    } else {
-                        this.tratativaPhotos[type].push(e.target.result);
+                    try {
+                        if (type === 'etiqueta') {
+                            this.tratativaPhotos.etiqueta = [e.target.result];
+                        } else {
+                            this.tratativaPhotos[type].push(e.target.result);
+                        }
+                        
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            this.renderPhotoGrid(type);
+                            input.value = ''; // Reset only after processing
+                        }
+                    } catch (err) {
+                        console.error('Erro ao processar imagem:', err);
+                        this.showToast('Erro ao processar imagem', 'error');
                     }
-                    
-                    loadedCount++;
-                    // Only render once all files in this batch are loaded to avoid UI flicker
-                    if (loadedCount === files.length) {
-                        this.renderPhotoGrid(type);
-                    }
+                };
+                reader.onerror = () => {
+                    this.showToast('Erro ao ler arquivo', 'error');
                 };
                 reader.readAsDataURL(file);
             });
-            input.value = ''; // Reset input
         },
 
         renderPhotoGrid(type) {
@@ -1726,11 +1736,19 @@
             });
 
             // Foto Upload (Cadastro)
-            document.getElementById('photo-container').addEventListener('click', () => {
-                document.getElementById('input-foto').click();
+            const photoContainer = document.getElementById('photo-container');
+            const inputFoto = document.getElementById('input-foto');
+            
+            photoContainer.addEventListener('click', (e) => {
+                if (e.target === inputFoto) return;
+                inputFoto.click();
             });
 
-            document.getElementById('input-foto').addEventListener('change', (e) => {
+            inputFoto.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            inputFoto.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
