@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestão FLV 1018 Pro</title>
+    <meta name="theme-color" content="#004085">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --dark-blue: #004085;
+            --danger-red: #dc3545;
+            --success-green: #28a745;
+            --bg-dark: #121212;
+            --card-dark: #1e1e1e;
+            --text-white: #ffffff;
+            --text-gray: #b0b0b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            padding-bottom: 80px; /* Space for fixed bottom navigation if needed */
+            overflow-x: hidden;
+        }
+
+        .container {
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: var(--dark-blue);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--primary-blue);
+            margin-bottom: 20px;
+        }
+
+        h1 { font-size: 1.5rem; }
+
+        /* Dashboard Styles */
+        .termometro {
+            background-color: var(--card-dark);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+            border: 2px solid transparent;
+        }
+        .termometro.alerta { background-color: var(--danger-red); border-color: #ffcccc; }
+        .termometro.bom { background-color: var(--success-green); border-color: #ccffcc; }
+        .termometro-status { font-size: 1.2rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .termometro-value { font-size: 3rem; font-weight: 900; }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: var(--card-dark);
+            padding: 12px 8px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-bottom: 3px solid var(--primary-blue);
+        }
+
+        .card.alert { border-left-color: var(--danger-red); }
+        .card.good { border-left-color: var(--success-green); }
+
+        .card-title {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .card-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .main-indicator {
+            grid-column: span 2;
+            padding: 20px;
+        }
+
+        .main-indicator .card-value {
+            font-size: 2.5rem;
+        }
+
+        /* Chart */
+        .chart-container {
+            margin: 20px 0;
+            background: var(--card-dark);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .bar-wrap {
+            height: 30px;
+            background: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-in-out, background-color 0.3s;
+        }
+
+        .target-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: white;
+            z-index: 2;
+        }
+
+        /* Forms */
+        .section-title {
+            margin: 20px 0 10px;
+            font-size: 1.1rem;
+            border-left: 4px solid var(--primary-blue);
+            padding-left: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #252525;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active { opacity: 0.7; }
+
+        .btn-primary { background-color: var(--primary-blue); color: white; }
+        .btn-success { background-color: var(--success-green); color: white; }
+        .btn-danger { background-color: var(--danger-red); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--text-gray); color: white; }
+
+        /* Search/Filter styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #252525;
+            border: 1px solid #444;
+            border-radius: 8px;
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-item {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+        }
+        .search-item:hover { background: #333; }
+
+        /* Status Icons */
+        .status-icon {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .tratativa-fields {
+            display: none;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+        .tratativa-fields.visible { display: block; }
+
+        /* History List */
+        .history-list {
+            margin-top: 10px;
+        }
+
+        .history-item {
+            background: var(--card-dark);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #444;
+        }
+
+        .history-item.tratativa-pendente { border-left-color: orange; }
+        .history-item.tratativa-aprovada { border-left-color: var(--success-green); }
+
+        .item-info div:first-child { font-weight: bold; }
+        .item-info div:last-child { font-size: 0.8rem; color: var(--text-gray); }
+
+        .item-value { text-align: right; font-weight: bold; }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-dark);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 2px solid var(--primary-blue);
+            z-index: 100;
+        }
+
+        .nav-item {
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 0.8rem;
+            text-decoration: none;
+            flex: 1;
+        }
+
+        .nav-item.active {
+            color: var(--primary-blue);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Photo Upload */
+        .photo-container {
+            width: 100%;
+            height: 200px;
+            background: #252525;
+            border: 2px dashed #444;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .photo-placeholder {
+            text-align: center;
+            color: var(--text-gray);
+        }
+
+        .photo-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .photo-box {
+            height: 100px;
+            background: #252525;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            font-size: 0.7rem;
+            text-align: center;
+            color: var(--text-gray);
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        /* Product List */
+        .product-list {
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: var(--card-dark);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .product-img-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            background: #333;
+            object-fit: cover;
+        }
+
+        /* Photo Grid and Multi-upload */
+        .photo-section {
+            margin-bottom: 20px;
+        }
+
+        .photo-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .photo-item {
+            width: 80px;
+            height: 80px;
+            background: #333;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #444;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .photo-add-card {
+            width: 80px;
+            height: 80px;
+            background: #252525;
+            border: 2px dashed #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .photo-add-card span {
+            font-size: 1.5rem;
+            color: #777;
+        }
+
+        .photo-add-card input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Whatsapp Send Steps */
+        .send-step {
+            background: var(--card-dark);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 4px solid #444;
+        }
+
+        .send-step.done {
+            border-left-color: var(--success-green);
+            opacity: 0.7;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-info div:first-child { font-weight: bold; font-size: 0.9rem; }
+        .step-info div:last-child { font-size: 0.75rem; color: var(--text-gray); }
+
+        .btn-send-step {
+            background: var(--success-green);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-send-step:active {
+            transform: scale(0.95);
+        }
+        .btn-send-step.done {
+            background-color: #6c757d;
+        }
+        .history-item .btn-send-step {
+            background: var(--primary-blue);
+            min-width: 70px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal.visible { display: flex; }
+        .modal-content {
+            background: var(--card-dark);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #444;
+        }
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .tratativa-card {
+            background: #252525;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #444;
+        }
+        .tratativa-card.pendente { border-left-color: orange; }
+        .tratativa-card.aprovada { border-left-color: var(--success-green); }
+        .tratativa-card.rejeitada { border-left-color: var(--danger-red); }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-pendente { background: orange; color: black; }
+        .badge-aprovada { background: var(--success-green); color: white; }
+        .badge-rejeitada { background: var(--danger-red); color: white; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 id="header-title">FLV 1018 Pro</h1>
+</header>
+
+<div class="container" id="view-dashboard">
+    <!-- Dashboard -->
+    <div id="view-dashboard" class="view">
+        <div class="termometro" id="termometro-card">
+            <div class="termometro-status" id="termometro-status">SITUAÇÃO: CARREGANDO</div>
+            <div class="termometro-value" id="val-indice">0,00%</div>
+            <div style="font-size: 0.8rem; opacity: 0.8;">Índice Líquido</div>
+        </div>
+
+        <div class="summary-row">
+            <div class="card" onclick="UI.switchView('venda')">
+                <div class="card-title">Venda do Dia</div>
+                <div class="card-value" id="val-venda" style="font-size: 0.9rem;">R$ 0,00</div>
+                <div style="font-size: 0.6rem; color: var(--text-gray);">(Editável)</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Quebra Bruta</div>
+                <div class="card-value" id="val-quebra" style="font-size: 0.9rem;">R$ 0,00</div>
+                <div style="font-size: 0.6rem; color: var(--text-gray);">(Soma Total)</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Índice Líquido</div>
+                <div class="card-value" id="val-indice-summary" style="font-size: 0.9rem;">0,00%</div>
+                <div style="font-size: 0.6rem; color: var(--text-gray);">(Após Tratativa)</div>
+            </div>
+        </div>
+
+        <!-- Meta Indicator (Optional but helpful) -->
+        <div class="chart-container" style="margin-top: 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                <span>Meta de Quebra: 3.5%</span>
+                <span id="chart-percent">0%</span>
+            </div>
+            <div class="bar-wrap">
+                <div class="target-line" style="left: 35%;"></div>
+                <div id="bar-fill" class="bar-fill"></div>
+            </div>
+        </div>
+
+        <div style="background: #252525; padding: 15px; border-radius: 12px; margin-top: 15px; text-align: center; border: 1px dashed var(--primary-blue);">
+            <div style="font-size: 0.9rem; font-weight: bold; color: var(--success-green);" id="val-bonus-footer">
+                Total Recuperado via Tratativa: R$ 0,00
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-gray); margin-top: 4px;">
+                Dinheiro que você "salvou" para a loja hoje.
+            </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 20px;">
+            <button class="btn-primary" id="btn-export">EXPORTAR RESUMO</button>
+            <button class="btn-outline" id="btn-limpar">LIMPAR TUDO</button>
+        </div>
+    </div>
+
+    <!-- View Venda do Dia -->
+    <div id="view-venda" class="view hidden">
+        <div class="section-title">Configurações de Venda</div>
+        <div class="card" style="margin-bottom: 20px; text-align: left; border-left: 4px solid var(--primary-blue);">
+            <p style="font-size: 0.9rem; color: var(--text-gray); margin-bottom: 10px;">Insira o valor total vendido hoje para calcular o índice de quebra.</p>
+            <div class="input-group">
+                <label>Venda Total do Dia (R$)</label>
+                <input type="text" id="input-venda" class="money-input" placeholder="R$ 0,00">
+            </div>
+        </div>
+    </div>
+
+    <!-- View Lançamento (Unificada) -->
+    <div id="view-lancamento" class="view hidden">
+        <div class="section-title">Área de Lançamento (Rápido e Prático)</div>
+        
+        <div class="search-container">
+            <label>Campo de Busca: "Procure o produto (ex: Tomate)..."</label>
+            <input type="text" id="input-busca-produto" placeholder="Digite o nome do produto..." autocomplete="off">
+            <div id="search-results" class="search-results"></div>
+            <input type="hidden" id="selected-product-name">
+        </div>
+
+        <div class="input-group">
+            <label>Preço de Custo (R$)</label>
+            <input type="text" id="input-preco-geral" class="money-input" placeholder="R$ 0,00">
+        </div>
+
+        <div class="input-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="input-group">
+                <label id="label-kg-geral">Quantos KG?</label>
+                <input type="number" id="input-kg-geral" placeholder="Ex: 5.5" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>Unidade</label>
+                <select id="select-unidade-geral" style="padding: 12px; height: 50px;">
+                    <option value="KG">KG</option>
+                    <option value="UND">UND</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin: 20px 0; background: #2a2a2a; padding: 15px; border-radius: 12px; border: 1px solid #444;">
+            <label style="display: flex; align-items: center; cursor: pointer; justify-content: space-between;">
+                <span style="font-weight: bold; color: var(--primary-blue);">LANÇAR COMO TRATATIVA?</span>
+                <input type="checkbox" id="check-is-tratativa" style="width: 25px; height: 25px;">
+            </label>
+        </div>
+
+        <!-- Campos Extras da Tratativa -->
+        <div id="extra-tratativa" class="tratativa-fields">
+            <div class="input-group">
+                <label id="label-chegou-geral">Qtd. Chegou (KG)</label>
+                <input type="number" id="input-chegou-geral" placeholder="Ex: 100" step="0.1">
+            </div>
+
+            <label>Status da Tratativa</label>
+            <div class="toggle-group" id="toggle-status-geral" style="display: flex; background: #252525; border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 1px solid #444;">
+                <div class="toggle-btn active" data-value="pendente" style="flex: 1; padding: 10px; text-align: center; cursor: pointer;">Pendente</div>
+                <div class="toggle-btn" data-value="aprovada" style="flex: 1; padding: 10px; text-align: center; cursor: pointer;">Aprovada</div>
+            </div>
+
+            <!-- Seções de Fotos -->
+            <div class="photo-section">
+                <span class="photo-label">FOTOS DO PRODUTO</span>
+                <div class="photo-grid" id="grid-fotos-produto-geral">
+                    <div class="photo-add-card">
+                        <span>+</span>
+                        <input type="file" multiple accept="image/*" onchange="UI.handleMultiPhoto(this, 'produto')">
+                    </div>
+                </div>
+            </div>
+
+            <div class="photo-section">
+                <span class="photo-label">FOTOS DA BALANÇA</span>
+                <div class="photo-grid" id="grid-fotos-balanca-geral">
+                    <div class="photo-add-card">
+                        <span>+</span>
+                        <input type="file" multiple accept="image/*" onchange="UI.handleMultiPhoto(this, 'balanca')">
+                    </div>
+                </div>
+            </div>
+
+            <div class="photo-section">
+                <span class="photo-label">FOTO DA ETIQUETA</span>
+                <div class="photo-grid" id="grid-foto-etiqueta-geral">
+                    <div class="photo-add-card">
+                        <span>📷</span>
+                        <input type="file" accept="image/*" onchange="UI.handleMultiPhoto(this, 'etiqueta')">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-success" id="btn-lancar-geral" style="margin-top: 15px; width: 100%; font-size: 1.2rem; padding: 18px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);">
+            CONFIRMAR LANÇAMENTO
+        </button>
+
+        <!-- History -->
+        <div class="section-title">Lista de Quebra do Dia (A "Caça ao Bônus")</div>
+        <div id="history-list" class="history-list">
+            <!-- Loaded by JS -->
+        </div>
+    </div>
+
+    <!-- View Cadastro -->
+    <div id="view-cadastro" class="view hidden">
+        <div class="section-title">Cadastrar Novo Produto</div>
+        
+        <div class="photo-container" id="photo-container">
+            <img id="preview-img" class="photo-preview">
+            <div class="photo-placeholder" id="photo-placeholder">
+                <span style="font-size: 2rem;">📷</span><br>
+                Tirar Foto ou Galeria
+            </div>
+            <input type="file" id="input-foto" class="photo-input" accept="image/*">
+        </div>
+
+        <div class="input-group">
+            <label>Código do Produto</label>
+            <input type="number" id="reg-codigo" placeholder="Ex: 101">
+        </div>
+
+        <div class="input-group">
+            <label>Nome do Produto</label>
+            <input type="text" id="reg-nome" placeholder="Ex: Melancia Baby">
+        </div>
+
+        <div class="input-group">
+            <label>Preço de Custo (Opcional - R$)</label>
+            <input type="text" id="reg-preco" class="money-input" placeholder="R$ 0,00">
+        </div>
+
+        <div class="input-group">
+            <label>Unidade Padrão</label>
+            <select id="reg-unidade" style="padding: 12px; height: 50px;">
+                <option value="KG">KG (Peso)</option>
+                <option value="UND">UND (Unidade)</option>
+            </select>
+        </div>
+
+        <button class="btn-success" id="btn-salvar-produto" style="width: 100%;">SALVAR PRODUTO</button>
+
+        <div class="section-title">Produtos Cadastrados</div>
+        <div id="product-list" class="product-list">
+            <!-- Loaded by JS -->
+        </div>
+    </div>
+
+    <!-- View Gestão de Tratativas -->
+    <div id="view-tratativas-gestao" class="view hidden">
+        <div class="section-title">Painel de Tratativas (Fluig)</div>
+        <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 15px;">
+            Ajuste as quantidades aprovadas pelo supervisor para sair da quebra.
+        </p>
+        <div id="lista-gestao-tratativas" class="history-list">
+            <!-- Loaded by JS -->
+        </div>
+    </div>
+
+    <!-- Modal de Aprovação -->
+    <div id="modal-aprovacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-prod-nome">Aprovar Tratativa</div>
+            
+            <div style="margin-bottom: 15px; background: #333; padding: 10px; border-radius: 8px;">
+                <label style="margin-bottom: 0;">KG Enviado: <span id="modal-kg-enviado" style="color: white; font-weight: bold;">0</span></label>
+            </div>
+
+            <div class="input-group">
+                <label>Quanto foi aprovado? (KG)</label>
+                <input type="number" id="modal-input-kg-aprovado" step="0.1" placeholder="Ex: 50.5">
+                <p style="font-size: 0.7rem; color: var(--text-gray); margin-top: 5px;">
+                    O que não for aprovado continuará como Quebra Real.
+                </p>
+            </div>
+
+            <div class="btn-row" style="margin-top: 20px;">
+                <button class="btn-success" id="btn-confirmar-aprovacao">APROVAR</button>
+                <button class="btn-danger" id="btn-rejeitar-tratativa">RECUSADO</button>
+            </div>
+            <button class="btn-outline" onclick="UI.closeModal()" style="width: 100%; margin-top: 10px;">FECHAR</button>
+        </div>
+    </div>
+
+    <!-- View Enviar WhatsApp (Individual) -->
+    <div id="view-enviar-whatsapp" class="view hidden">
+        <div class="section-title">Enviar para WhatsApp</div>
+        
+        <div id="whatsapp-steps" style="margin-bottom: 20px;">
+            <!-- Gerado dinamicamente pelo JS -->
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-outline" onclick="UI.switchView('lancamento')" style="width: 100%;">NOVO LANÇAMENTO</button>
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="#" class="nav-item active" id="nav-dashboard">
+        <span class="nav-icon">📊</span>
+        Início
+    </a>
+    <a href="#" class="nav-item" id="nav-venda">
+        <span class="nav-icon">💰</span>
+        Venda
+    </a>
+    <a href="#" class="nav-item" id="nav-lancamento">
+        <span class="nav-icon">📝</span>
+        Lançar
+    </a>
+    <a href="#" class="nav-item" id="nav-tratativas-gestao">
+        <span class="nav-icon">⚖️</span>
+        Tratativas
+    </a>
+    <a href="#" class="nav-item" id="nav-cadastro">
+        <span class="nav-icon">🍎</span>
+        Produtos
+    </a>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+    // --- STORAGE OBJECT ---
+    const Storage = {
+        dbName: 'FLV1018DB',
+        dbVersion: 2, // Upgraded version for new store
+        
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, this.dbVersion);
+                request.onerror = () => reject('Erro ao abrir banco de dados');
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('quebras')) {
+                        db.createObjectStore('quebras', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('produtos')) {
+                        db.createObjectStore('produtos', { keyPath: 'codigo' });
+                    }
+                };
+            });
+        },
+
+        async saveQuebra(data) {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['quebras'], 'readwrite');
+                const store = transaction.objectStore('quebras');
+                // Ensure kgEnviado is set
+                const kgEnviado = data.kg;
+                const kgAprovado = data.status === 'aprovada' ? data.kg : 0;
+                store.add({ ...data, kgEnviado, kgAprovado, timestamp: new Date().getTime() });
+                transaction.oncomplete = () => resolve(true);
+            });
+        },
+
+        async updateQuebra(timestamp, updates) {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['quebras'], 'readwrite');
+                const store = transaction.objectStore('quebras');
+                const request = store.openCursor();
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        if (cursor.value.timestamp === timestamp) {
+                            const updatedData = { ...cursor.value, ...updates };
+                            cursor.update(updatedData);
+                            resolve(true);
+                        } else {
+                            cursor.continue();
+                        }
+                    } else {
+                        resolve(false);
+                    }
+                };
+            });
+        },
+
+        async getQuebras() {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['quebras'], 'readonly');
+                const store = transaction.objectStore('quebras');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+            });
+        },
+
+        async deleteQuebra(timestamp) {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['quebras'], 'readwrite');
+                const store = transaction.objectStore('quebras');
+                const request = store.openCursor();
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        if (cursor.value.timestamp === timestamp) {
+                            cursor.delete();
+                            resolve(true);
+                        } else {
+                            cursor.continue();
+                        }
+                    } else {
+                        resolve(false);
+                    }
+                };
+            });
+        },
+
+        async saveProduto(produto) {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['produtos'], 'readwrite');
+                const store = transaction.objectStore('produtos');
+                store.put(produto);
+                transaction.oncomplete = () => resolve(true);
+            });
+        },
+
+        async getProdutos() {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['produtos'], 'readonly');
+                const store = transaction.objectStore('produtos');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+            });
+        },
+
+        async deleteProduto(codigo) {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['produtos'], 'readwrite');
+                const store = transaction.objectStore('produtos');
+                const request = store.delete(codigo);
+                transaction.oncomplete = () => resolve(true);
+                request.onerror = () => resolve(false);
+            });
+        },
+
+        async clearAll() {
+            const db = await this.init();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['quebras'], 'readwrite');
+                transaction.objectStore('quebras').clear();
+                transaction.oncomplete = () => resolve(true);
+            });
+        },
+
+        setVenda(valor) {
+            localStorage.setItem('venda_dia', valor);
+        },
+
+        getVenda() {
+            return parseFloat(localStorage.getItem('venda_dia')) || 0;
+        }
+    };
+
+    // --- CALCULOS OBJECT ---
+    const Calculos = {
+        META: 3.5,
+
+        calcularResumo(quebras, vendaTotal) {
+            let bruta = 0;
+            let recuperado = 0;
+            let tratativaPendente = 0;
+
+            quebras.forEach(item => {
+                const valorBruto = (item.kgEnviado || item.kg) * item.precoCusto;
+                bruta += valorBruto;
+                
+                if (item.tipo === 'tratativa') {
+                    if (item.status === 'aprovada') {
+                        // Use kgAprovado if available, else use kg
+                        const valorRecuperado = (item.kgAprovado !== undefined ? item.kgAprovado : item.kg) * item.precoCusto;
+                        recuperado += valorRecuperado;
+                    } else if (item.status === 'pendente') {
+                        tratativaPendente += valorBruto;
+                    }
+                }
+            });
+
+            const quebraLiquida = bruta - recuperado;
+            const indiceLiquido = vendaTotal > 0 ? (quebraLiquida / vendaTotal) * 100 : 0;
+
+            return {
+                bruta,
+                recuperado,
+                tratativaPendente,
+                indiceLiquido,
+                isAlerta: indiceLiquido > this.META
+            };
+        }
+    };
+
+    // --- UI OBJECT ---
+    const UI = {
+        currentView: 'dashboard',
+        currentPhoto: null,
+        produtos: [],
+        lastLoadedQuebras: [],
+        
+        // Multi-photo state for current tratativa
+        tratativaPhotos: {
+            produto: [],
+            balanca: [],
+            etiqueta: []
+        },
+
+        async init() {
+            await this.loadProdutos();
+            this.setupEventListeners();
+            this.refresh();
+        },
+
+        async loadProdutos() {
+            const customProdutos = await Storage.getProdutos();
+            this.produtos = customProdutos;
+            
+            const selects = document.querySelectorAll('.select-produto');
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">Selecione um produto...</option>';
+                this.produtos.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.nome;
+                    const precoTexto = p.preco > 0 ? ` (R$ ${p.preco.toFixed(2)})` : '';
+                    opt.textContent = `${p.nome}${precoTexto}`;
+                    select.appendChild(opt);
+                });
+            });
+
+            this.renderProductList(customProdutos);
+        },
+
+        renderProductList(customProdutos) {
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            customProdutos.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'product-card';
+                const precoTexto = p.preco > 0 ? `R$ ${p.preco.toFixed(2)}` : 'Preço não definido';
+                div.innerHTML = `
+                    <img src="${p.foto || 'https://via.placeholder.com/50'}" class="product-img-small">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold;">${p.nome}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-gray);">Cod: ${p.codigo} | ${precoTexto}</div>
+                    </div>
+                    <button class="btn-send-step" style="padding: 5px 10px; background: var(--danger-red); width: auto;" onclick="UI.deleteProduto(${p.codigo})">
+                        🗑️
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        },
+
+        switchView(view) {
+            this.currentView = view;
+            // Hide all views
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            // Show current view
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            
+            // Update Nav
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navItem = document.getElementById(`nav-${view}`);
+            if (navItem) navItem.classList.add('active');
+            
+            const titles = {
+                dashboard: 'FLV 1018 Pro',
+                venda: 'Venda do Dia',
+                lancamento: 'Lançar Quebra',
+                'tratativas-gestao': 'Gestão de Tratativas',
+                cadastro: 'Cadastro de Produtos',
+                'enviar-whatsapp': 'Confirmar Envio'
+            };
+            document.getElementById('header-title').textContent = titles[view] || 'FLV 1018 Pro';
+        },
+
+        // Money Masking
+        formatMoney(value) {
+            value = value.replace(/\D/g, "");
+            value = (value / 100).toFixed(2) + "";
+            value = value.replace(".", ",");
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            return "R$ " + value;
+        },
+
+        parseMoney(formattedValue) {
+            if (!formattedValue) return 0;
+            return parseFloat(formattedValue.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        },
+
+        async refresh() {
+            const venda = Storage.getVenda();
+            const quebras = await Storage.getQuebras();
+            this.lastLoadedQuebras = quebras;
+            const resumo = Calculos.calcularResumo(quebras, venda);
+
+            // Update Cards
+            document.getElementById('val-venda').textContent = this.formatMoney((venda * 100).toString());
+            document.getElementById('val-quebra').textContent = this.formatMoney((resumo.bruta * 100).toString());
+            document.getElementById('val-indice-summary').textContent = `${resumo.indiceLiquido.toFixed(2)}%`;
+            document.getElementById('val-indice').textContent = `${resumo.indiceLiquido.toFixed(2)}%`;
+            
+            // Termômetro Logic
+            const termometro = document.getElementById('termometro-card');
+            const statusLabel = document.getElementById('termometro-status');
+            
+            if (resumo.isAlerta) {
+                termometro.className = 'termometro alerta';
+                statusLabel.textContent = 'SITUAÇÃO: ALERTA';
+            } else {
+                termometro.className = 'termometro bom';
+                statusLabel.textContent = 'SITUAÇÃO: BOM';
+            }
+
+            // Bonus Footer
+            document.getElementById('val-bonus-footer').textContent = `Total Recuperado via Tratativa: ${this.formatMoney((resumo.recuperado * 100).toString())}`;
+
+            // Update Chart
+            const fill = document.getElementById('bar-fill');
+            const percentLabel = document.getElementById('chart-percent');
+            const barWidth = Math.min((resumo.indiceLiquido / 10) * 100, 100);
+            fill.style.width = `${barWidth}%`;
+            fill.style.backgroundColor = resumo.isAlerta ? 'var(--danger-red)' : 'var(--success-green)';
+            percentLabel.textContent = `${resumo.indiceLiquido.toFixed(1)}% / 3.5%`;
+
+            // Update History
+            this.renderHistory(quebras, 'history-list');
+            this.renderGestaoTratativas(quebras);
+            
+            // Sync input if empty
+            const inputVenda = document.getElementById('input-venda');
+            if (venda > 0 && !inputVenda.value) {
+                inputVenda.value = this.formatMoney((venda * 100).toFixed(0));
+            }
+        },
+
+        renderGestaoTratativas(quebras) {
+            const list = document.getElementById('lista-gestao-tratativas');
+            list.innerHTML = '';
+            
+            const tratativas = quebras.filter(item => item.tipo === 'tratativa');
+            
+            if (tratativas.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-gray); margin-top: 20px;">Nenhuma tratativa lançada hoje.</p>';
+                return;
+            }
+
+            [...tratativas].reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = `tratativa-card ${item.status}`;
+                div.onclick = () => {
+                    if (item.status === 'pendente') {
+                        this.openModalAprovacao(item);
+                    } else {
+                        this.showToast('Esta tratativa já foi processada.', 'error');
+                    }
+                };
+                
+                const valorEnviado = (item.kgEnviado || item.kg) * item.precoCusto;
+                const valorAprovado = (item.kgAprovado || 0) * item.precoCusto;
+                
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="font-weight: bold; font-size: 1.1rem;">${item.produto}</div>
+                        <span class="badge badge-${item.status}">${item.status}</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-gray);">
+                        <div>Enviado: ${(item.kgEnviado || item.kg)}${item.unidade || 'kg'} (${this.formatMoney((valorEnviado * 100).toFixed(0))})</div>
+                        ${item.status === 'aprovada' ? `
+                            <div style="color: var(--success-green); font-weight: bold; margin-top: 4px;">
+                                Aprovado: ${item.kgAprovado}${item.unidade || 'kg'} (${this.formatMoney((valorAprovado * 100).toFixed(0))})
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${item.status === 'pendente' ? `
+                        <div style="margin-top: 10px; font-size: 0.75rem; color: var(--primary-blue); font-weight: bold; text-align: right;">
+                            CLIQUE PARA APROVAR/AJUSTAR ⚖️
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(div);
+            });
+        },
+
+        selectedItemForApproval: null,
+
+        openModalAprovacao(item) {
+            this.selectedItemForApproval = item;
+            document.getElementById('modal-prod-nome').textContent = `Aprovar: ${item.produto}`;
+            document.getElementById('modal-kg-enviado').textContent = `${(item.kgEnviado || item.kg)} ${item.unidade || 'kg'}`;
+            document.getElementById('modal-input-kg-aprovado').value = (item.kgEnviado || item.kg);
+            document.getElementById('modal-aprovacao').classList.add('visible');
+        },
+
+        closeModal() {
+            document.getElementById('modal-aprovacao').classList.remove('visible');
+            this.selectedItemForApproval = null;
+        },
+
+        async confirmarAprovacao() {
+            if (!this.selectedItemForApproval) return;
+            
+            const kgAprovado = parseFloat(document.getElementById('modal-input-kg-aprovado').value);
+            const kgEnviado = this.selectedItemForApproval.kgEnviado || this.selectedItemForApproval.kg;
+
+            if (isNaN(kgAprovado) || kgAprovado < 0) {
+                this.showToast('Digite uma quantidade válida', 'error');
+                return;
+            }
+
+            if (kgAprovado > kgEnviado) {
+                this.showToast('Quantidade aprovada não pode ser maior que a enviada', 'error');
+                return;
+            }
+
+            await Storage.updateQuebra(this.selectedItemForApproval.timestamp, {
+                status: 'aprovada',
+                kgAprovado: kgAprovado
+            });
+
+            this.showToast('Tratativa Aprovada com Sucesso!');
+            this.closeModal();
+            await this.refresh();
+        },
+
+        async rejeitarTratativa() {
+            if (!this.selectedItemForApproval) return;
+
+            if (!confirm('Deseja marcar esta tratativa como NÃO APROVADA? Ela continuará como Quebra Real.')) return;
+
+            await Storage.updateQuebra(this.selectedItemForApproval.timestamp, {
+                status: 'normal', // Volta a ser quebra normal (Quebra Real)
+                tipo: 'normal',
+                kgAprovado: 0
+            });
+
+            this.showToast('Tratativa Recusada. Item voltou para Quebra Real.');
+            this.closeModal();
+            await this.refresh();
+        },
+
+        renderHistory(quebras, containerId) {
+            const list = document.getElementById(containerId);
+            list.innerHTML = '';
+            
+            // Reverse for latest first
+            [...quebras].reverse().forEach((item, revIndex) => {
+                const index = quebras.length - 1 - revIndex;
+                const div = document.createElement('div');
+                div.className = `history-item ${item.tipo === 'tratativa' ? 'tratativa-' + item.status : ''}`;
+                const valorBruto = (item.kgEnviado || item.kg) * item.precoCusto;
+                const valorAprovado = (item.kgAprovado || 0) * item.precoCusto;
+                
+                let statusIcon = '🗑️'; // Default for Quebra Real
+                let statusText = 'Quebra Real';
+                
+                if (item.tipo === 'tratativa') {
+                    if (item.status === 'aprovada') {
+                        statusIcon = '✅';
+                        statusText = 'Tratativa Aprovada';
+                    } else {
+                        statusIcon = '⏳';
+                        statusText = 'Tratativa Pendente';
+                    }
+                }
+
+                const totalFotos = (item.fotosProduto?.length || 0) + (item.fotosBalanca?.length || 0) + (item.fotosEtiqueta?.length || 0);
+                
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                        <span class="status-icon" title="${statusText}">${statusIcon}</span>
+                        <div class="item-info" style="flex: 1;">
+                            <div style="font-weight: bold;">${item.produto}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-gray);">
+                                ${item.status === 'aprovada' ? 
+                                    `${item.kgAprovado}${item.unidade || 'kg'} aprov. de ${item.kgEnviado}${item.unidade || 'kg'}` : 
+                                    `${(item.kgEnviado || item.kg)}${item.unidade || 'kg'}`
+                                } - ${this.formatMoney((item.status === 'aprovada' ? valorAprovado * 100 : valorBruto * 100).toFixed(0))}
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--primary-blue); margin-top: 2px;">
+                                Status: ${statusText} ${totalFotos > 0 ? `| 📷 ${totalFotos}` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            ${item.tipo === 'tratativa' ? `
+                                <button class="btn-send-step" style="padding: 5px 8px; font-size: 0.7rem;" onclick="UI.showEnviarWhatsAppByIndex(${index})">
+                                    ENVIAR
+                                </button>
+                            ` : ''}
+                            <button class="btn-send-step" style="padding: 5px 8px; background: var(--danger-red); width: auto;" onclick="UI.deleteItem(${item.timestamp})">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        },
+
+        showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            toast.style.borderBottom = `4px solid ${type === 'success' ? 'var(--success-green)' : 'var(--danger-red)'}`;
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        },
+
+        handleMultiPhoto(input, type) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+
+            let loadedCount = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (type === 'etiqueta') {
+                        this.tratativaPhotos.etiqueta = [e.target.result]; // Single only
+                    } else {
+                        this.tratativaPhotos[type].push(e.target.result);
+                    }
+                    
+                    loadedCount++;
+                    // Only render once all files in this batch are loaded to avoid UI flicker
+                    if (loadedCount === files.length) {
+                        this.renderPhotoGrid(type);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = ''; // Reset input
+        },
+
+        renderPhotoGrid(type) {
+            const gridId = type === 'etiqueta' ? 'grid-foto-etiqueta-geral' : `grid-fotos-${type}-geral`;
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+
+            // Save the add card before clearing
+            const addCard = grid.querySelector('.photo-add-card');
+            grid.innerHTML = '';
+            
+            this.tratativaPhotos[type].forEach((src, index) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                div.innerHTML = `
+                    <img src="${src}">
+                    <div class="photo-remove" onclick="UI.removePhoto('${type}', ${index})">×</div>
+                `;
+                grid.appendChild(div);
+            });
+            
+            // Re-add card if allowed (always for multi, or if empty for single)
+            if (type !== 'etiqueta' || this.tratativaPhotos.etiqueta.length === 0) {
+                if (addCard) grid.appendChild(addCard);
+            }
+        },
+
+        removePhoto(type, index) {
+            this.tratativaPhotos[type].splice(index, 1);
+            this.renderPhotoGrid(type);
+        },
+
+        async deleteProduto(codigo) {
+            if (confirm('Deseja excluir este produto permanentemente?')) {
+                await Storage.deleteProduto(codigo);
+                this.showToast('Produto excluído');
+                await this.loadProdutos();
+            }
+        },
+
+        async deleteItem(timestamp) {
+            if (confirm('Deseja excluir este lançamento?')) {
+                await Storage.deleteQuebra(timestamp);
+                this.showToast('Lançamento excluído');
+                this.refresh();
+            }
+        },
+
+        showEnviarWhatsAppByIndex(index) {
+            const data = this.lastLoadedQuebras[index];
+            if (data) {
+                this.showEnviarWhatsApp(data);
+            }
+        },
+
+        showEnviarWhatsApp(data) {
+            const stepsDiv = document.getElementById('whatsapp-steps');
+            stepsDiv.innerHTML = '';
+            
+            const steps = [];
+            
+            // 1. Text Summary
+            let texto = `*CÓD:* ${data.codigo || '-'}\n`;
+            texto += `${data.produto}\n`;
+            texto += `*DATA:* ${data.data}\n`;
+            texto += `*CHEGOU:* ${data.chegou} ${data.unidade || 'KG'}\n`;
+            texto += `*QTD DA QUEBRA:* ${data.kg} ${data.unidade || 'KG'}`;
+            
+            steps.push({ title: 'Enviar Texto', desc: data.produto, type: 'text', content: texto });
+
+            // 2. Product Photos
+            if (data.fotosProduto && data.fotosProduto.length > 0) {
+                data.fotosProduto.forEach((img, i) => {
+                    steps.push({ title: `Foto Produto ${i+1}`, desc: 'Imagem do Produto', type: 'image', content: img });
+                });
+            }
+
+            // 3. Scale Photos
+            if (data.fotosBalanca && data.fotosBalanca.length > 0) {
+                data.fotosBalanca.forEach((img, i) => {
+                    steps.push({ title: `Foto Balança ${i+1}`, desc: 'Imagem da Balança', type: 'image', content: img });
+                });
+            }
+
+            // 4. Label Photo
+            if (data.fotosEtiqueta && data.fotosEtiqueta.length > 0) {
+                steps.push({ title: 'Foto Etiqueta', desc: 'Imagem da Etiqueta', type: 'image', content: data.fotosEtiqueta[0] });
+            }
+
+            steps.forEach((step, index) => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'send-step';
+                stepEl.id = `step-${index}`;
+                stepEl.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-info">
+                        <div>${step.title}</div>
+                        <div>${step.desc}</div>
+                    </div>
+                    <button class="btn-send-step" onclick="UI.executeSendStep(${index})">ENVIAR</button>
+                `;
+                stepsDiv.appendChild(stepEl);
+            });
+
+            this.currentSteps = steps;
+            this.switchView('enviar-whatsapp');
+        },
+
+        async executeSendStep(index) {
+            const step = this.currentSteps[index];
+            const stepEl = document.getElementById(`step-${index}`);
+            
+            if (step.type === 'text') {
+                const url = `https://wa.me/?text=${encodeURIComponent(step.content)}`;
+                window.open(url, '_blank');
+            } else {
+                // Share image if supported, otherwise just open WA
+                try {
+                    const blob = await (await fetch(step.content)).blob();
+                    const file = new File([blob], 'foto.jpg', { type: 'image/jpeg' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: step.title
+                        });
+                    } else {
+                        // Fallback for desktop/non-supporting browsers
+                        this.showToast('Compartilhamento de imagem não suportado neste navegador. Tente pelo celular.', 'danger');
+                        window.open('https://wa.me/', '_blank');
+                    }
+                } catch (err) {
+                    console.error('Erro ao compartilhar:', err);
+                    window.open('https://wa.me/', '_blank');
+                }
+            }
+            
+            stepEl.classList.add('done');
+            stepEl.querySelector('button').textContent = 'REENVIAR';
+        },
+
+        setupEventListeners() {
+            // Navigation
+            document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); this.switchView('dashboard'); });
+            document.getElementById('nav-venda').addEventListener('click', (e) => { e.preventDefault(); this.switchView('venda'); });
+            document.getElementById('nav-lancamento').addEventListener('click', (e) => { e.preventDefault(); this.switchView('lancamento'); });
+            document.getElementById('nav-tratativas-gestao').addEventListener('click', (e) => { e.preventDefault(); this.switchView('tratativas-gestao'); });
+            document.getElementById('nav-cadastro').addEventListener('click', (e) => { e.preventDefault(); this.switchView('cadastro'); });
+
+            // Modal Buttons
+            document.getElementById('btn-confirmar-aprovacao').addEventListener('click', () => this.confirmarAprovacao());
+            document.getElementById('btn-rejeitar-tratativa').addEventListener('click', () => this.rejeitarTratativa());
+
+            // Search Logic
+            const searchInput = document.getElementById('input-busca-produto');
+            const searchResults = document.getElementById('search-results');
+            const selectedProductName = document.getElementById('selected-product-name');
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                if (term.length < 1) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+
+                const filtered = this.produtos.filter(p => 
+                    p.nome.toLowerCase().includes(term) || 
+                    (p.codigo && p.codigo.toString().includes(term))
+                );
+
+                if (filtered.length > 0) {
+                    searchResults.innerHTML = '';
+                    filtered.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'search-item';
+                        div.textContent = `${p.nome} (R$ ${p.preco.toFixed(2)})`;
+                        div.onclick = () => {
+                            searchInput.value = p.nome;
+                            selectedProductName.value = p.nome;
+                            document.getElementById('input-preco-geral').value = this.formatMoney((p.preco * 100).toFixed(0));
+                            
+                            // Auto-switch unit based on product
+                            const selectUnidade = document.getElementById('select-unidade-geral');
+                            if (p.unidade) {
+                                selectUnidade.value = p.unidade;
+                                // Trigger change to update labels
+                                selectUnidade.dispatchEvent(new Event('change'));
+                            }
+                            
+                            searchResults.style.display = 'none';
+                        };
+                        searchResults.appendChild(div);
+                    });
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.style.display = 'none';
+                }
+            });
+
+            // Close search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+
+            // Tratativa Toggle Logic
+            const tratativaCheckbox = document.getElementById('check-is-tratativa');
+            const extraTratativa = document.getElementById('extra-tratativa');
+            tratativaCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    extraTratativa.classList.add('visible');
+                } else {
+                    extraTratativa.classList.remove('visible');
+                }
+            });
+
+            // Unit Change Logic
+            const selectUnidade = document.getElementById('select-unidade-geral');
+            const labelKg = document.getElementById('label-kg-geral');
+            const labelChegou = document.getElementById('label-chegou-geral');
+
+            selectUnidade.addEventListener('change', (e) => {
+                const unit = e.target.value;
+                labelKg.textContent = unit === 'KG' ? 'Quantos KG?' : 'Quantas UND?';
+                labelChegou.textContent = unit === 'KG' ? 'Qtd. Chegou (KG)' : 'Qtd. Chegou (UND)';
+            });
+
+            // Toggle Status Geral (Pendente/Aprovada)
+            document.querySelectorAll('#toggle-status-geral .toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#toggle-status-geral .toggle-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            // Unified Save Logic
+            document.getElementById('btn-lancar-geral').addEventListener('click', async () => {
+                const produtoNome = selectedProductName.value || searchInput.value;
+                const precoInput = document.getElementById('input-preco-geral');
+                const kgInput = document.getElementById('input-kg-geral');
+                const isTratativa = tratativaCheckbox.checked;
+                const unidade = document.getElementById('select-unidade-geral').value;
+                
+                const preco = this.parseMoney(precoInput.value);
+                const kg = parseFloat(kgInput.value);
+
+                if (!produtoNome) {
+                    this.showToast('Procure e selecione um produto', 'error');
+                    return;
+                }
+
+                if (preco <= 0) {
+                    this.showToast('Digite o preço de custo', 'error');
+                    return;
+                }
+
+                if (!kg || kg <= 0) {
+                    const label = unidade === 'KG' ? 'peso (KG)' : 'quantidade (UND)';
+                    this.showToast(`Digite o ${label}`, 'error');
+                    return;
+                }
+
+                const productObj = this.produtos.find(p => p.nome === produtoNome);
+                const codigo = productObj ? productObj.codigo : '-';
+
+                let data;
+                if (isTratativa) {
+                    const chegou = parseFloat(document.getElementById('input-chegou-geral').value) || 0;
+                    const status = document.querySelector('#toggle-status-geral .active').dataset.value;
+
+                    data = {
+                        codigo,
+                        produto: produtoNome,
+                        kg,
+                        chegou,
+                        unidade,
+                        precoCusto: preco,
+                        tipo: 'tratativa',
+                        status: status,
+                        fotosProduto: [...this.tratativaPhotos.produto],
+                        fotosBalanca: [...this.tratativaPhotos.balanca],
+                        fotosEtiqueta: [...this.tratativaPhotos.etiqueta],
+                        data: new Date().toLocaleDateString('pt-BR')
+                    };
+                } else {
+                    data = {
+                        codigo,
+                        produto: produtoNome,
+                        kg,
+                        unidade,
+                        precoCusto: preco,
+                        tipo: 'normal',
+                        status: 'normal',
+                        data: new Date().toLocaleDateString('pt-BR')
+                    };
+                }
+
+                await Storage.saveQuebra(data);
+
+                // Reset fields
+                searchInput.value = '';
+                selectedProductName.value = '';
+                precoInput.value = '';
+                kgInput.value = '';
+                tratativaCheckbox.checked = false;
+                extraTratativa.classList.remove('visible');
+                document.getElementById('input-chegou-geral').value = '';
+                document.getElementById('select-unidade-geral').value = 'KG';
+                document.getElementById('label-kg-geral').textContent = 'Quantos KG?';
+                document.getElementById('label-chegou-geral').textContent = 'Qtd. Chegou (KG)';
+                
+                this.tratativaPhotos = { produto: [], balanca: [], etiqueta: [] };
+                this.renderPhotoGrid('produto');
+                this.renderPhotoGrid('balanca');
+                this.renderPhotoGrid('etiqueta');
+
+                this.showToast('Lançamento salvo com sucesso!');
+                await this.refresh();
+                
+                if (isTratativa) {
+                    this.showEnviarWhatsApp(data);
+                } else {
+                    this.switchView('dashboard');
+                }
+            });
+
+            // Money Masks
+            document.querySelectorAll('.money-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    e.target.value = this.formatMoney(e.target.value);
+                });
+            });
+
+            // Venda Change
+            document.getElementById('input-venda').addEventListener('input', (e) => {
+                const valor = this.parseMoney(e.target.value);
+                Storage.setVenda(valor);
+                this.refresh();
+            });
+
+            // Foto Upload (Cadastro)
+            document.getElementById('photo-container').addEventListener('click', () => {
+                document.getElementById('input-foto').click();
+            });
+
+            document.getElementById('input-foto').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        this.currentPhoto = event.target.result;
+                        const preview = document.getElementById('preview-img');
+                        preview.src = this.currentPhoto;
+                        preview.style.display = 'block';
+                        document.getElementById('photo-placeholder').style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Salvar Produto
+            document.getElementById('btn-salvar-produto').addEventListener('click', async () => {
+                const codigo = document.getElementById('reg-codigo').value;
+                const nome = document.getElementById('reg-nome').value;
+                const precoFormatted = document.getElementById('reg-preco').value;
+                const unidade = document.getElementById('reg-unidade').value;
+                const preco = this.parseMoney(precoFormatted);
+
+                if (!codigo || !nome) {
+                    this.showToast('Código e Nome são obrigatórios', 'error');
+                    return;
+                }
+
+                await Storage.saveProduto({
+                    codigo: parseInt(codigo),
+                    nome,
+                    unidade,
+                    preco: preco || 0,
+                    foto: this.currentPhoto
+                });
+
+                // Reset Form
+                document.getElementById('reg-codigo').value = '';
+                document.getElementById('reg-nome').value = '';
+                document.getElementById('reg-preco').value = '';
+                document.getElementById('reg-unidade').value = 'KG';
+                document.getElementById('preview-img').style.display = 'none';
+                document.getElementById('photo-placeholder').style.display = 'block';
+                this.currentPhoto = null;
+
+                this.showToast('Produto cadastrado!');
+                await this.loadProdutos();
+            });
+
+            // Limpar
+            document.getElementById('btn-limpar').addEventListener('click', async () => {
+                if (confirm('Deseja limpar todos os lançamentos de hoje?')) {
+                    await Storage.clearAll();
+                    this.refresh();
+                    this.showToast('Dados limpos!');
+                }
+            });
+
+            // Exportar
+            document.getElementById('btn-export').addEventListener('click', async () => {
+                const venda = Storage.getVenda();
+                const quebras = await Storage.getQuebras();
+                const resumo = Calculos.calcularResumo(quebras, venda);
+
+                const dataStr = new Date().toLocaleDateString('pt-BR');
+                let texto = `*RESUMO FLV 1018 - ${dataStr}*\n\n`;
+                texto += `💰 *Venda:* R$ ${venda.toFixed(2)}\n`;
+                texto += `📉 *Quebra Bruta:* R$ ${resumo.bruta.toFixed(2)}\n`;
+                texto += `✅ *Recuperado:* R$ ${resumo.recuperado.toFixed(2)}\n`;
+                texto += `⏳ *Pendentes:* R$ ${resumo.tratativaPendente.toFixed(2)}\n`;
+                texto += `📊 *Índice Líquido:* ${resumo.indiceLiquido.toFixed(2)}%\n`;
+                texto += `Status: ${resumo.isAlerta ? '🔴 ACIMA DA META' : '🟢 DENTRO DA META'}\n\n`;
+
+                const tratativas = quebras.filter(q => q.tipo === 'tratativa');
+                if (tratativas.length > 0) {
+                    texto += `*DETALHES DAS TRATATIVAS:*\n`;
+                    tratativas.forEach(t => {
+                        texto += `\n*CÓD:* ${t.codigo || '-'}\n`;
+                        texto += `*NOME DO PRODUTO:* ${t.produto}\n`;
+                        texto += `*DATA:* ${t.data || new Date(t.timestamp).toLocaleDateString('pt-BR')}\n`;
+                        texto += `*CHEGOU:* ${t.chegou || 0} ${t.unidade || 'KG'}\n`;
+                        texto += `*QTD DA QUEBRA:* ${t.kg} ${t.unidade || 'KG'}\n`;
+                        texto += `*STATUS:* ${t.status.toUpperCase()}\n`;
+                        texto += `-------------------`;
+                    });
+                    texto += `\n\n`;
+                }
+
+                texto += `_Enviado via App Gestão FLV Pro_`;
+
+                const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+                window.open(url, '_blank');
+            });
+        }
+    };
+
+    // Initialize App
+    UI.init();
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
+        });
+    }
+</script>
+
+</body>
+</html>
